@@ -4,15 +4,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+    // Founding administrator account(s), so the first admin needs no manual database entry.
+    function isFounder() { return signedIn() && request.auth.uid in ["vd08cZLkynTCpeuzYyM1gecHVBy2"]; }
     function hasEmailAccount() { return signedIn() && request.auth.token.firebase.sign_in_provider == "password"; }
-    function isStaff() { return signedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)); }
+    function hasStaffDoc() { return signedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)); }
     function staffData() { return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data; }
-    function isDirector() { return isStaff() && staffData().role == "director"; }
-    function isAdmin() { return isStaff() && staffData().get("admin", false) == true; }
+    function isStaff() { return isFounder() || hasStaffDoc(); }
+    function isDirector() { return isFounder() || (hasStaffDoc() && staffData().role == "director"); }
+    function isAdmin() { return isFounder() || (hasStaffDoc() && staffData().get("admin", false) == true); }
     function shortText(v, max) { return v is string && v.size() <= max; }
 
     // Approved staff. Only administrators add, change or remove staff.
-    // The very first administrator is added once by hand in the Firebase console.
     match /staff/{uid} {
       allow read: if isSelf(uid) || isAdmin();
       allow create, update: if isAdmin()
