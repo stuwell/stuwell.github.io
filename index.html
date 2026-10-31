@@ -1052,6 +1052,7 @@ window.__I18N_DICT = [
 ["Screener: low well-being","Dépistage : bien-être bas","استبيان: رفاهية منخفضة"],["Screener: high stress","Dépistage : stress élevé","استبيان: توتر مرتفع"],
 ["Very low well-being screener","Dépistage de bien-être très bas","استبيان رفاهية منخفضة جداً"],["The student scored 28 or less out of 100 on the WHO-5 well-being index.","L'étudiant a obtenu 28 ou moins sur 100 à l'indice de bien-être WHO-5.","حصل الطالب على 28 أو أقل من 100 في مؤشر الرفاهية WHO-5."],
 ["High stress screener","Dépistage de stress élevé","استبيان توتر مرتفع"],
+["Nothing is going on","Il ne se passe rien de particulier","لا يحدث شيء خاص"],
 /* ---- RSES and CORE-10 ---- */
 ["Self-esteem check","Bilan d'estime de soi","فحص تقدير الذات"],["Distress check","Bilan de détresse","فحص الضيق النفسي"],
 ["Ten statements from the Rosenberg Self-Esteem Scale about how you see yourself.","Dix affirmations de l'échelle d'estime de soi de Rosenberg sur la façon dont vous vous voyez.","عشر عبارات من مقياس روزنبرغ لتقدير الذات حول نظرتك إلى نفسك."],
@@ -1490,7 +1491,8 @@ const CONCERNS = [
   { k: "home", t: "Things are difficult at home" },
   { k: "health", t: "I am physically unwell or in pain" },
   { k: "unsafe", t: "I feel unsafe, or I have thoughts of hurting myself" },
-  { k: "wantsTalk", t: "I would like to talk to someone" }
+  { k: "wantsTalk", t: "I would like to talk to someone" },
+  { k: "none", t: "Nothing is going on" }
 ];
 const DURS = [["today", "Only today"], ["days", "A few days"], ["2w", "About two weeks"], ["more", "More than two weeks"]];
 const REASON = { bullying: "Bullying", home: "Difficulties at home", health: "Physical health", wantsTalk: "Wants to talk", lowMood: "Low mood", sleep: "Poor sleep", stress: "High stress", lonely: "Feeling alone", workload: "Heavy study load" };
@@ -3249,7 +3251,11 @@ const RQ_FIELDS = { "rq-type": "type", "rq-to": "to", "rq-from": "from", "rq-unt
 const PF_FIELDS = { "pf-name": "name", "pf-cls": "cls", "pf-school-txt": "school" };
 document.addEventListener("change", e => {
   const t = e.target;
-  if (t.matches("[data-c]")) { S.concerns[t.dataset.c] = t.checked; return; }
+  if (t.matches("[data-c]")) {
+    /* "Nothing is going on" and the other options exclude each other */
+    const k = t.dataset.c; S.concerns[k] = t.checked;
+    if (t.checked) document.querySelectorAll("[data-c]").forEach(b => { if (b !== t && (k === "none" || b.dataset.c === "none")) { b.checked = false; S.concerns[b.dataset.c] = false; } });
+    return; }
   if (t.matches("[data-rqs]")) { const r = D.requests.find(x => x.id === t.dataset.rqs); if (r) { r.status = t.value; save(); $("#rq-list").innerHTML = rqListHTML(); } return; }
   if (t.id === "rq-cert") { S.rq.cert = t.checked; refreshRq(); return; }
   if (t.id === "pf-share") { S.pf.share = t.checked; return; }
