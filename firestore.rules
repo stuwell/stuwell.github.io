@@ -4,52 +4,97 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
-    // Founding administrator account(s), so the first admin needs no manual database entry.
+    // Founding StuWell administrator account(s).
     function isFounder() { return signedIn() && request.auth.uid in ["vd08cZLkynTCpeuzYyM1gecHVBy2"]; }
-    function hasEmailAccount() { return signedIn() && request.auth.token.firebase.sign_in_provider == "password"; }
     function hasStaffDoc() { return signedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)); }
-    function staffData() { return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data; }
-    function isStaff() { return isFounder() || hasStaffDoc(); }
-    function isDirector() { return isFounder() || (hasStaffDoc() && staffData().role == "director"); }
-    function isAdmin() { return isFounder() || (hasStaffDoc() && staffData().get("admin", false) == true); }
+    function me() { return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data; }
+    // StuWell administrators see every school.
+    function isAdmin() { return isFounder() || (hasStaffDoc() && me().get("admin", false) == true); }
+    function mySchool() { return me().get("schoolKey", ""); }
+    function isStaffOf(key) { return hasStaffDoc() && key is string && key != "" && mySchool() == key; }
+    function isDirectorOf(key) { return isStaffOf(key) && me().role == "director"; }
     function shortText(v, max) { return v is string && v.size() <= max; }
+    // A school's key is its name in lower case.
+    function keyMatches(d) { return d.school is string && d.schoolKey is string && d.schoolKey == d.school.lower().trim(); }
+    function schoolOf(key) { return get(/databases/$(database)/documents/schools/$(key)).data; }
+    function codeFor(key, role) { return get(/databases/$(database)/documents/schoolCodes/$(key)).data.get(role + "Code", ""); }
 
-    // Approved staff. Only administrators add, change or remove staff.
+    // Staff must use a confirmed school mailbox: not a public provider, not a student mailbox.
+    function emailDomain() { return request.auth.token.email.lower().split("@")[1]; }
+    function schoolEmail() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider == "password"
+        && request.auth.token.email_verified == true
+        && !(emailDomain() in ["gmail.com", "googlemail.com", "outlook.com", "outlook.fr", "hotmail.com", "hotmail.fr", "live.com", "live.fr", "msn.com", "yahoo.com", "yahoo.fr", "ymail.com", "icloud.com", "me.com", "aol.com", "protonmail.com", "proton.me", "gmx.com", "gmx.fr", "mail.com", "yandex.com", "menara.ma"])
+        && !(emailDomain().split("[.]")[0] in ["etu", "edu", "student", "students", "etud", "stu"]);
+    }
+
+    // Registered schools: name and email domain. Everyone can read the list.
+    // A confirmed school email can register its own school and becomes its "founder".
+    match /schools/{key} {
+      allow read: if true;
+      allow create: if isAdmin()
+        || (schoolEmail() && !hasStaffDoc()
+          && request.resource.data.keys().hasOnly(["name", "domain", "founder", "ts"])
+          && shortText(request.resource.data.name, 60) && request.resource.data.name.size() >= 3
+          && key == request.resource.data.name.lower().trim()
+          && request.resource.data.domain == emailDomain()
+          && request.resource.data.founder == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // Each school's two access codes. Administrators and that school's directors manage them.
+    match /schoolCodes/{key} {
+      allow read: if isAdmin() || isDirectorOf(key);
+      allow write: if (isAdmin() || isDirectorOf(key))
+        && request.resource.data.keys().hasOnly(["directorCode", "professorCode", "ts"])
+        && request.resource.data.directorCode is string && request.resource.data.directorCode.size() >= 8
+        && request.resource.data.professorCode is string && request.resource.data.professorCode.size() >= 8
+        && request.resource.data.directorCode != request.resource.data.professorCode;
+    }
+
+    // Staff. A person with a confirmed email at the school's domain joins with that school's code
+    // for their role; the person who registered the school becomes its first director.
     match /staff/{uid} {
-      allow read: if isSelf(uid) || isAdmin();
-      allow create, update: if isAdmin()
-        && request.resource.data.keys().hasOnly(["name", "email", "school", "role", "ts", "admin"])
+      allow read: if isSelf(uid) || isAdmin() || isDirectorOf(resource.data.schoolKey);
+      allow create: if (isSelf(uid) && schoolEmail()
+          && request.resource.data.keys().hasOnly(["name", "email", "school", "schoolKey", "role", "code", "ts"])
+          && request.resource.data.role in ["director", "professor"]
+          && shortText(request.resource.data.name, 80)
+          && shortText(request.resource.data.school, 60)
+          && request.resource.data.email == request.auth.token.email
+          && keyMatches(request.resource.data) && request.resource.data.schoolKey != ""
+          && schoolOf(request.resource.data.schoolKey).domain == emailDomain()
+          && ((request.resource.data.role == "director" && schoolOf(request.resource.data.schoolKey).founder == uid)
+            || (request.resource.data.code is string && request.resource.data.code.size() >= 8
+              && request.resource.data.code == codeFor(request.resource.data.schoolKey, request.resource.data.role))))
+        || (isAdmin()
+          && request.resource.data.keys().hasOnly(["name", "email", "school", "schoolKey", "role", "code", "ts", "admin"])
+          && request.resource.data.role in ["director", "professor"]);
+      allow update: if isAdmin()
+        && request.resource.data.keys().hasOnly(["name", "email", "school", "schoolKey", "role", "code", "ts", "admin"])
         && request.resource.data.role in ["director", "professor"];
-      allow delete: if isAdmin() && !isSelf(uid);
+      allow delete: if !isSelf(uid) && (isAdmin() || isDirectorOf(resource.data.schoolKey));
     }
 
-    // A request to become staff, filed by the person themselves from the sign-up form.
-    match /staffRequests/{uid} {
-      allow read: if isSelf(uid) || isAdmin();
-      allow create, update: if isSelf(uid) && hasEmailAccount()
-        && request.resource.data.keys().hasOnly(["name", "email", "school", "role", "ts"])
-        && request.resource.data.role in ["director", "professor"]
-        && shortText(request.resource.data.name, 80)
-        && shortText(request.resource.data.email, 120)
-        && shortText(request.resource.data.school, 60);
-      allow delete: if isSelf(uid) || isAdmin();
-    }
-
-    // What a student chose to share. Each student can only write their own document.
+    // What a student chose to share. Each student writes only their own document;
+    // staff read only the students of their own school.
     match /shared/{uid} {
-      allow read: if isSelf(uid) || isStaff();
+      allow read: if isSelf(uid) || isAdmin() || isStaffOf(resource.data.schoolKey);
       allow create, update: if isSelf(uid)
-        && request.resource.data.keys().hasOnly(["name", "cls", "school", "year", "share", "updated", "checkins", "checkups", "requests"])
+        && request.resource.data.keys().hasOnly(["name", "cls", "school", "schoolKey", "year", "share", "updated", "checkins", "checkups", "requests"])
+        && keyMatches(request.resource.data)
         && request.resource.data.checkins.size() <= 12
         && request.resource.data.checkups.size() <= 8
         && request.resource.data.requests.size() <= 30;
       allow delete: if isSelf(uid);
     }
 
-    // Replies to medical requests: written by directors, read by the student they belong to.
+    // Replies to medical requests: written by a director of the student's school, read by the student.
     match /replies/{uid} {
-      allow read: if isSelf(uid) || isStaff();
-      allow write: if isDirector();
+      allow read: if isSelf(uid) || isAdmin() || isStaffOf(resource.data.schoolKey);
+      allow write: if isAdmin()
+        || (isDirectorOf(request.resource.data.schoolKey)
+          && get(/databases/$(database)/documents/shared/$(uid)).data.schoolKey == request.resource.data.schoolKey);
     }
   }
 }
