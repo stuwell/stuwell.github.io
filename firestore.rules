@@ -1,0 +1,53 @@
+rules_version = '2';
+// StuWell security rules: paste into Firebase console > Firestore Database > Rules, then Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+    function hasEmailAccount() { return signedIn() && request.auth.token.firebase.sign_in_provider == "password"; }
+    function isStaff() { return signedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)); }
+    function staffData() { return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data; }
+    function isDirector() { return isStaff() && staffData().role == "director"; }
+    function isAdmin() { return isStaff() && staffData().get("admin", false) == true; }
+    function shortText(v, max) { return v is string && v.size() <= max; }
+
+    // Approved staff. Only administrators add, change or remove staff.
+    // The very first administrator is added once by hand in the Firebase console.
+    match /staff/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(["name", "email", "school", "role", "ts", "admin"])
+        && request.resource.data.role in ["director", "professor"];
+      allow delete: if isAdmin() && !isSelf(uid);
+    }
+
+    // A request to become staff, filed by the person themselves from the sign-up form.
+    match /staffRequests/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create, update: if isSelf(uid) && hasEmailAccount()
+        && request.resource.data.keys().hasOnly(["name", "email", "school", "role", "ts"])
+        && request.resource.data.role in ["director", "professor"]
+        && shortText(request.resource.data.name, 80)
+        && shortText(request.resource.data.email, 120)
+        && shortText(request.resource.data.school, 60);
+      allow delete: if isSelf(uid) || isAdmin();
+    }
+
+    // What a student chose to share. Each student can only write their own document.
+    match /shared/{uid} {
+      allow read: if isSelf(uid) || isStaff();
+      allow create, update: if isSelf(uid)
+        && request.resource.data.keys().hasOnly(["name", "cls", "school", "year", "share", "updated", "checkins", "checkups", "requests"])
+        && request.resource.data.checkins.size() <= 12
+        && request.resource.data.checkups.size() <= 8
+        && request.resource.data.requests.size() <= 30;
+      allow delete: if isSelf(uid);
+    }
+
+    // Replies to medical requests: written by directors, read by the student they belong to.
+    match /replies/{uid} {
+      allow read: if isSelf(uid) || isStaff();
+      allow write: if isDirector();
+    }
+  }
+}
