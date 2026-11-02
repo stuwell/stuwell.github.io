@@ -524,6 +524,12 @@ html[dir="rtl"] .msgbox{direction:rtl;text-align:right}
 
 /* screening notice */
 .note.dx{background:var(--blue-soft);color:var(--ink)}
+
+/* feedback stars */
+.stars{display:flex;gap:4px}
+.stars button{border:0;background:none;cursor:pointer;font-size:2rem;line-height:1;padding:4px;color:var(--line);transition:color .15s,transform .1s}
+.stars button:hover{transform:scale(1.1)}
+.stars button[aria-pressed="true"]{color:#E7A93B}
 </style>
 
 </head>
@@ -1053,6 +1059,17 @@ window.__I18N_DICT = [
 ["Very low well-being screener","Dépistage de bien-être très bas","استبيان رفاهية منخفضة جداً"],["The student scored 28 or less out of 100 on the WHO-5 well-being index.","L'étudiant a obtenu 28 ou moins sur 100 à l'indice de bien-être WHO-5.","حصل الطالب على 28 أو أقل من 100 في مؤشر الرفاهية WHO-5."],
 ["High stress screener","Dépistage de stress élevé","استبيان توتر مرتفع"],
 ["Nothing is going on","Il ne se passe rien de particulier","لا يحدث شيء خاص"],
+/* ---- feedback ---- */
+["Give feedback","Donner votre avis","شاركنا رأيك"],["Reviews, suggestions, problems","Avis, suggestions, problèmes","آراء، اقتراحات، مشاكل"],["Feedback","Votre avis","رأيك"],
+["Help us make StuWell better.","Aidez-nous à améliorer StuWell.","ساعدنا على تحسين StuWell."],
+["Write a review, suggest an idea or report a problem. It takes one minute, and only the StuWell team reads it.","Laissez un avis, proposez une idée ou signalez un problème. Cela prend une minute, et seule l'équipe StuWell le lit.","اكتب رأيك أو اقترح فكرة أو أبلغ عن مشكلة. يستغرق ذلك دقيقة، ولا يقرؤه إلا فريق StuWell."],
+["Tell us what you think of StuWell, or what we could do better. Only the StuWell team reads it.","Dites-nous ce que vous pensez de StuWell, ou ce que nous pourrions améliorer. Seule l'équipe StuWell le lit.","أخبرنا برأيك في StuWell أو بما يمكننا تحسينه. لا يقرؤه إلا فريق StuWell."],
+["Type of feedback","Type d'avis","نوع الرأي"],["Review","Avis","رأي"],["Suggestion","Suggestion","اقتراح"],["Problem","Problème","مشكلة"],
+["Your rating (optional)","Votre note (facultatif)","تقييمك (اختياري)"],["Your message","Votre message","رسالتك"],["What did you like? What should we change?","Qu'avez-vous aimé ? Que devrions-nous changer ?","ما الذي أعجبك؟ ما الذي ينبغي أن نغيّره؟"],
+["Please do not write personal health details here. Feedback is not watched in real time. If you need help now, use Help now.","Merci de ne pas écrire de détails personnels sur votre santé ici. Les avis ne sont pas surveillés en temps réel. Si vous avez besoin d'aide maintenant, utilisez Aide immédiate.","من فضلك لا تكتب تفاصيل صحية شخصية هنا. لا تتم مراقبة الآراء في الوقت الفعلي. إذا كنت تحتاج إلى مساعدة الآن فاستخدم مساعدة فورية."],
+["Send feedback","Envoyer mon avis","أرسل رأيك"],["Thank you! Your feedback was sent.","Merci ! Votre avis a été envoyé.","شكراً! تم إرسال رأيك."],["The StuWell team reads every message.","L'équipe StuWell lit chaque message.","يقرأ فريق StuWell كل رسالة."],
+["Feedback can be sent from the public StuWell site.","Vous pouvez donner votre avis depuis le site public de StuWell.","يمكنك إرسال رأيك من موقع StuWell العام."],
+["Write a few words first","Écrivez d'abord quelques mots","اكتب بضع كلمات أولاً"],["Could not send. Try again later.","Envoi impossible. Réessayez plus tard.","تعذّر الإرسال. حاول لاحقاً."],
 /* ---- RSES and CORE-10 ---- */
 ["Self-esteem check","Bilan d'estime de soi","فحص تقدير الذات"],["Distress check","Bilan de détresse","فحص الضيق النفسي"],
 ["Ten statements from the Rosenberg Self-Esteem Scale about how you see yourself.","Dix affirmations de l'échelle d'estime de soi de Rosenberg sur la façon dont vous vous voyez.","عشر عبارات من مقياس روزنبرغ لتقدير الذات حول نظرتك إلى نفسك."],
@@ -2726,6 +2743,8 @@ function landingView() {
       <details><summary>Who can open the director and professor areas?</summary><p>Only school staff with a staff account. Everyone else sees a sign-in screen instead.</p></details>
     </div></section>
 
+  <section class="wrap lsec" id="feedback"><div class="reach rv" style="background:var(--surface);border:1px solid var(--line);color:var(--ink)"><div class="stack" style="gap:8px"><span class="kicker">Feedback</span><h3 style="color:var(--ink);font-size:1.6rem">Help us make StuWell better.</h3><p class="soft">Write a review, suggest an idea or report a problem. It takes one minute, and only the StuWell team reads it.</p></div><button class="btn primary" data-act="dlg" data-v="feedback" type="button">${ic("chat", 20)} Give feedback</button></div></section>
+
   <section class="wrap lsec"><div class="cta rv"><h2>Ready when you are.</h2><p>Take a minute for yourself, or open the dashboard for your school.</p>
     <div class="row" style="justify-content:center"><button class="btn light" data-act="goStudent" type="button">I am a student</button><button class="btn line-light" data-act="goProfessor" type="button">I am a professor</button><button class="btn line-light" data-act="goDirector" type="button">I am a director</button></div></div></section>`;
 }
@@ -2963,6 +2982,7 @@ function menuHTML() {
     ${it("dlg", "profile", "lockc", "My profile and sharing", "Choose what your school can see")}
     ${it("help", "", "help", "Help now", "Emergency numbers")}
     ${it("dlg", "about", "book", "About and privacy", "What is stored and who can see it")}
+    ${it("dlg", "feedback", "chat", "Give feedback", "Reviews, suggestions, problems")}
     ${LIVE.signedIn ? it("staffOut", "", "user", "Sign out of the staff account") : ""}
     <hr class="mdiv">
     ${langSegHTML()}<div class="mtheme"><span class="small"><b>Appearance</b></span><div class="seg" role="group" aria-label="Appearance">${["auto", "light", "dark"].map(t => `<button type="button" data-act="theme" data-v="${t}" aria-pressed="${S.theme === t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div></div>
@@ -2991,11 +3011,12 @@ function renderFooter() {
       <div><h4>Students</h4><button class="lk" data-act="goStudent" data-v="checkin" type="button">Check-in</button><button class="lk" data-act="goStudent" data-v="screeners" type="button">Screeners</button><button class="lk" data-act="goStudent" data-v="medical" type="button">Medical request</button><button class="lk" data-act="goStudent" data-v="calm" type="button">Calm tools</button></div>
       <div><h4>Directors</h4><button class="lk" data-act="goDirector" data-v="overview" type="button">Overview</button><button class="lk" data-act="goDirector" data-v="students" type="button">Students</button><button class="lk" data-act="goDirector" data-v="requests" type="button">Requests</button></div>
       <div><h4>Professors</h4><button class="lk" data-act="goProfessor" data-v="classes" type="button">My classes</button><button class="lk" data-act="goProfessor" data-v="students" type="button">Students</button></div>
-      <div><h4>Help</h4><button class="lk" data-act="help" type="button">Help now</button><button class="lk" data-act="dlg" data-v="about" type="button">About and privacy</button><button class="lk" data-act="goStudent" data-v="support" type="button">Get support</button></div></div>
+      <div><h4>Help</h4><button class="lk" data-act="help" type="button">Help now</button><button class="lk" data-act="dlg" data-v="about" type="button">About and privacy</button><button class="lk" data-act="goStudent" data-v="support" type="button">Get support</button><button class="lk" data-act="dlg" data-v="feedback" type="button">Give feedback</button></div></div>
       <p class="lfine">StuWell is a self-reflection and support tool. It does not diagnose or treat any condition and does not replace a doctor, a psychologist or a counsellor. A Business English group project.</p>`;
   } else {
     f.innerHTML = `<div class="foot"><p><b>Your well-being, our priority.</b> StuWell is a self-reflection tool. It does not diagnose or treat any condition and does not replace a doctor, a psychologist or a counsellor.</p>
-      <p>${S.mode === "director" || S.mode === "professor" ? "Student information is private. Share it only with people who need it to help." : "Private by default: your answers stay on this device unless you choose to share them with your school."}</p></div>`;
+      <p>${S.mode === "director" || S.mode === "professor" ? "Student information is private. Share it only with people who need it to help." : "Private by default: your answers stay on this device unless you choose to share them with your school."}</p>
+      <div><button class="btn sm" data-act="dlg" data-v="feedback" type="button">${ic("chat", 18)} Give feedback</button></div></div>`;
   }
 }
 function aboutDialog() {
@@ -3020,11 +3041,36 @@ function profileDialog() {
     <p class="fine">StuWell is not watched in real time. If you need help now, use Help now or talk to someone you trust.</p>
     <div class="row"><button class="btn primary" data-act="pfSave" type="button">Save</button><button class="btn" data-act="closeHelp" type="button">Cancel</button></div></div></div>`;
 }
+/* feedback is sent to the school database (public site only) and read by the StuWell team in the Firebase console */
+function feedbackDialog() {
+  const f = S.fb, head = `<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><h2 id="dlg-t" style="font-size:1.7rem">Give feedback</h2><button class="btn ghost sm" data-act="closeHelp" type="button" aria-label="Close">${ic("close", 22)}</button></div>`;
+  const wrap = inner => `<div class="backdrop" data-act="bd"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-t" tabindex="-1" id="dlg">${head}${inner}</div></div>`;
+  if (f.sent) return wrap(`<div class="empty">${ic("check", 40)}<b>Thank you! Your feedback was sent.</b><span>The StuWell team reads every message.</span></div><button class="btn primary" data-act="closeHelp" type="button">Close</button>`);
+  if (!LIVE.fb) return wrap(`<p class="soft">Feedback can be sent from the public StuWell site.</p><p><a href="https://stuwell.github.io" target="_blank" rel="noopener noreferrer">stuwell.github.io</a></p><button class="btn primary" data-act="closeHelp" type="button">Close</button>`);
+  return wrap(`<p class="soft">Tell us what you think of StuWell, or what we could do better. Only the StuWell team reads it.</p>
+    <div class="seg" role="group" aria-label="Type of feedback" style="justify-content:flex-start">${[["review", "Review"], ["suggestion", "Suggestion"], ["problem", "Problem"]].map(k => `<button type="button" data-act="fbKind" data-v="${k[0]}" aria-pressed="${f.kind === k[0]}">${k[1]}</button>`).join("")}</div>
+    <div class="stack" style="gap:6px"><span class="label">Your rating (optional)</span><div class="stars" role="group" aria-label="Your rating (optional)">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-act="fbStar" data-v="${n}" aria-pressed="${f.rating >= n}" aria-label="${n} out of 5">★</button>`).join("")}</div></div>
+    <div class="fld"><label for="fb-msg">Your message</label><textarea class="field" id="fb-msg" maxlength="1000" placeholder="What did you like? What should we change?">${esc(f.msg)}</textarea></div>
+    <div class="fld"><label for="fb-name">Your name (optional)</label><input class="field" id="fb-name" type="text" maxlength="60" autocomplete="name" value="${esc(f.name)}"></div>
+    <p class="fine">Please do not write personal health details here. Feedback is not watched in real time. If you need help now, use Help now.</p>
+    <div class="row"><button class="btn primary" id="fb-send" data-act="fbSend" type="button">Send feedback</button><button class="btn" data-act="closeHelp" type="button">Cancel</button></div>`);
+}
+async function sendFeedback() {
+  const f = S.fb, msg = f.msg.trim(), btn = $("#fb-send");
+  if (msg.length < 3) { toast("Write a few words first"); const m = $("#fb-msg"); if (m) m.focus(); return; }
+  if (!LIVE.db || !LIVE.uid) { toast("Could not send. Try again later."); return; }
+  if (btn) btn.disabled = true;
+  try {
+    await LIVE.db.doc("feedback/" + LIVE.uid + "_" + Date.now()).set({ kind: f.kind, rating: f.rating, message: msg.slice(0, 1000), name: f.name.trim().slice(0, 60), lang: window.I18N.lang(), page: S.mode, ts: Date.now() });
+    f.sent = true; openDlg("feedback");
+  } catch (e) { toast("Could not send. Try again later."); if (btn) btn.disabled = false; }
+}
 let lastFocus = null;
 function openDlg(kind) {
   lastFocus = document.activeElement; S.dlg = kind; S.menu = false;
   if (kind === "profile") S.pf = { name: D.profile.name || "", cls: D.profile.cls || "", school: D.profile.school || "", year: D.profile.year || "", share: !!D.profile.share };
-  $("#dlg-root").innerHTML = kind === "help" ? helpDialog() : kind === "about" ? aboutDialog() : profileDialog();
+  if (kind === "feedback" && (!S.fb || (S.fb.sent && lastFocus && !lastFocus.closest("#dlg")))) S.fb = { kind: "review", rating: 0, msg: "", name: "", sent: false };
+  $("#dlg-root").innerHTML = kind === "help" ? helpDialog() : kind === "about" ? aboutDialog() : kind === "feedback" ? feedbackDialog() : profileDialog();
   document.body.style.overflow = "hidden"; renderHeader();
   const d = $("#dlg"); if (d) d.focus();
 }
@@ -3145,6 +3191,9 @@ document.addEventListener("click", e => {
     case "exitFlow": exitFlow(); break;
     case "staffOut": S.menu = false; staffSignOut(); break;
     case "staffTab": S.staffTab = v; render(); break;
+    case "fbKind": S.fb.kind = v; document.querySelectorAll('[data-act="fbKind"]').forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v))); break;
+    case "fbStar": S.fb.rating = S.fb.rating === +v ? 0 : +v; document.querySelectorAll('[data-act="fbStar"]').forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v <= S.fb.rating))); break;
+    case "fbSend": sendFeedback(); break;
     case "finishTab": S.finishTab = v; render(); break;
     case "staffVerified": staffCheckVerified(); break;
     case "staffResend": staffResend(); break;
@@ -3283,6 +3332,8 @@ document.addEventListener("change", e => {
 document.addEventListener("input", e => {
   const id = e.target.id;
   if (id === "worry") S.worry = e.target.value;
+  else if (id === "fb-msg") S.fb.msg = e.target.value;
+  else if (id === "fb-name") S.fb.name = e.target.value;
   else if (id === "demo-r") { const o = $("#demo-out"); if (o) o.innerHTML = demoOut(+e.target.value); }
   else if (id === "dq") { S.fq = e.target.value; const l = $("#slist"); if (l) l.innerHTML = studentsListHTML(); }
   else if (PF_FIELDS[id]) S.pf[PF_FIELDS[id]] = e.target.value;

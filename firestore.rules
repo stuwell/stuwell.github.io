@@ -96,5 +96,21 @@ service cloud.firestore {
         || (isDirectorOf(request.resource.data.schoolKey)
           && get(/databases/$(database)/documents/shared/$(uid)).data.schoolKey == request.resource.data.schoolKey);
     }
+
+    // Feedback: any visitor can send it (the ID starts with their own ID); nobody can read it from the site.
+    // The StuWell team reads it in the Firebase console. A sender may delete their own message.
+    match /feedback/{id} {
+      allow create: if signedIn() && id.matches(request.auth.uid + "_[0-9]+")
+        && request.resource.data.keys().hasOnly(["kind", "rating", "message", "name", "lang", "page", "ts"])
+        && request.resource.data.kind in ["review", "suggestion", "problem"]
+        && request.resource.data.rating is int && request.resource.data.rating >= 0 && request.resource.data.rating <= 5
+        && request.resource.data.message is string && request.resource.data.message.size() >= 3 && request.resource.data.message.size() <= 1000
+        && shortText(request.resource.data.name, 60)
+        && shortText(request.resource.data.lang, 5)
+        && shortText(request.resource.data.page, 20)
+        && request.resource.data.ts is int;
+      allow delete: if signedIn() && id.matches(request.auth.uid + "_[0-9]+");
+      allow read, update: if false;
+    }
   }
 }
