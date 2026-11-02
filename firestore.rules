@@ -81,7 +81,8 @@ service cloud.firestore {
     match /shared/{uid} {
       allow read: if isSelf(uid) || isAdmin() || isStaffOf(resource.data.schoolKey);
       allow create, update: if isSelf(uid)
-        && request.resource.data.keys().hasOnly(["name", "cls", "school", "schoolKey", "year", "share", "updated", "checkins", "checkups", "requests"])
+        && request.resource.data.keys().hasOnly(["name", "cls", "school", "schoolKey", "year", "massar", "share", "updated", "checkins", "checkups", "requests"])
+        && (!("massar" in request.resource.data) || (request.resource.data.massar is string && request.resource.data.massar.matches("[A-Z][0-9]{9}")))
         && keyMatches(request.resource.data)
         && request.resource.data.checkins.size() <= 12
         && request.resource.data.checkups.size() <= 8
