@@ -544,6 +544,19 @@ html[dir="rtl"] .msgbox{direction:rtl;text-align:right}
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <script>
 window.__I18N_DICT = [
+/* ---- example mode for the staff spaces (fictional students) ---- */
+["Just looking?","Vous voulez juste voir ?","تريد فقط إلقاء نظرة؟"],
+["See what directors see, with fictional students. Nothing here is real and nothing is saved.","Découvrez ce que voient les directeurs, avec des étudiants fictifs. Rien n'est réel et rien n'est enregistré.","اكتشف ما يراه المديرون، مع طلاب وهميين. لا شيء هنا حقيقي ولا يُحفظ أي شيء."],
+["See what professors see, with fictional students. Nothing here is real and nothing is saved.","Découvrez ce que voient les professeurs, avec des étudiants fictifs. Rien n'est réel et rien n'est enregistré.","اكتشف ما يراه الأساتذة، مع طلاب وهميين. لا شيء هنا حقيقي ولا يُحفظ أي شيء."],
+["See an example","Voir un exemple","شاهد مثالاً"],
+["Example with fictional students.","Exemple avec des étudiants fictifs.","مثال بطلاب وهميين."],
+["Nothing here is real, and nothing you do is saved or sent.","Rien n'est réel ici, et rien de ce que vous faites n'est enregistré ni envoyé.","لا شيء هنا حقيقي، ولا يُحفظ أو يُرسل أي شيء تقوم به."],
+["See the director space","Voir l'espace directeur","شاهد فضاء المدير"],["See the professor space","Voir l'espace professeur","شاهد فضاء الأستاذ"],
+["Exit the example","Quitter l'exemple","الخروج من المثال"],["Example only: nothing was sent","Exemple uniquement : rien n'a été envoyé","مثال فقط: لم يُرسل أي شيء"],
+["Example school","École exemple","مدرسة نموذجية"],
+["I was ill during the accounting exam week. My doctor advised three days of rest. Could the exam be moved?","J'étais malade pendant la semaine de l'examen de comptabilité. Mon médecin m'a conseillé trois jours de repos. L'examen pourrait-il être déplacé ?","كنت مريضاً خلال أسبوع امتحان المحاسبة. نصحني طبيبي بالراحة لمدة ثلاثة أيام. هل يمكن تأجيل الامتحان؟"],
+["Medical absence for a small operation next Monday and Tuesday.","Absence médicale pour une petite opération lundi et mardi prochains.","غياب طبي بسبب عملية صغيرة يومي الاثنين والثلاثاء المقبلين."],
+["Approved. Please bring the medical certificate to the administration when you are back. Take care.","Accepté. Merci d'apporter le certificat médical à l'administration à votre retour. Prenez soin de vous.","تمت الموافقة. يرجى إحضار الشهادة الطبية إلى الإدارة عند عودتك. اعتنِ بنفسك."],
 /* ---- header, menu, tabs ---- */
 ["Help now","Aide immédiate","مساعدة فورية"],
 ["Student","Étudiant","طالب"],["Director","Directeur","المدير"],["Professor","Professeur","أستاذ"],
@@ -2307,6 +2320,31 @@ function helpDialog() {
 let REPL = {};
 const LIVE = { db: null, user: null, uid: null, edit: null, write: null, ready: false, err: "", fb: null, role: "", signedIn: false, admin: false, schoolKey: "", school: "", verified: false, email: "", name: "" };
 const DIR = { students: [], replies: {}, codes: null, staff: [], schoolsPub: [] };
+/* ---------- example mode: a demo school with fictional students, so anyone can see the staff spaces ----------
+   While it is on, the staff views read this object instead of the school database, and nothing is saved or sent. */
+let DEMO = null;
+function demoData() {
+  const now = Date.now(), school = "Example school", key = "example school";
+  const ci = (d, idx, flags, unsafe) => ({ ts: now - d * DAY, idx, flags: flags || [], unsafe: !!unsafe });
+  const cu = (d, kind, score, max, safety) => ({ ts: now - d * DAY, kind, score, max, safety: !!safety });
+  const stu = (id, name, cls, year, massar, checkins, checkups, requests) => ({ id, name, cls, school, schoolKey: key, year, massar, share: true, checkins, checkups: checkups || [], requests: requests || [] });
+  return {
+    school,
+    students: [
+      stu("x1", "Yasmine B.", "G2", "2", "R130045871", [ci(9, 3.4), ci(6, 2.8, ["sleep"]), ci(3, 2.2, ["lowMood", "sleep"]), ci(1, 1.4, ["lowMood", "lonely", "wantsTalk"], true)], [cu(1, "core10", 24, 40, true)]),
+      stu("x2", "Omar K.", "G1", "1", "R140022093", [ci(8, 3.2), ci(4, 2.6, ["bullying"]), ci(1, 2.0, ["bullying", "lowMood", "lonely"])], [], [{ id: "q1", ts: now - 1 * DAY, type: "exam", to: "director", notes: "I was ill during the accounting exam week. My doctor advised three days of rest. Could the exam be moved?", from: "", until: "", cert: true }]),
+      stu("x3", "Salma E.", "G2", "2", "R120067412", [ci(5, 2.9, ["stress"]), ci(2, 2.4, ["stress", "workload"])], [cu(2, "phq9", 12, 27), cu(2, "gad7", 11, 21)], [{ id: "q2", ts: now - 4 * DAY, type: "absence", to: "director", notes: "Medical absence for a small operation next Monday and Tuesday.", from: "", until: "", cert: true }]),
+      stu("x4", "Adam R.", "G3", "3", "R110038254", [ci(6, 3.6), ci(2, 3.0, ["stress", "workload"])], [cu(3, "pss10", 24, 40)]),
+      stu("x5", "Nour H.", "G1", "1", "R140051367", [ci(4, 3.5), ci(1, 3.3)], [cu(1, "rses", 12, 30)]),
+      stu("x6", "Ilyas M.", "G3", "3", "R110029746", [ci(7, 4.0), ci(3, 4.3), ci(1, 4.2)], [cu(5, "who5", 72, 100)]),
+      stu("x7", "Hiba T.", "G2", "2", "R120083115", [ci(5, 3.9), ci(2, 4.4)]),
+      stu("x8", "Mehdi A.", "G1", "1", "R140017659", [ci(24, 3.1)])
+    ],
+    replies: { x3: { r_q2: { status: "approved", reply: "Approved. Please bring the medical certificate to the administration when you are back. Take care.", ts: now - 3 * DAY } } },
+    codes: { directorCode: "DIR-7KQ2MX", professorCode: "PROF-9PL4WH" },
+    staff: [{ name: "Fatima Zahra L.", role: "director", you: true }, { name: "Karim S.", role: "professor" }, { name: "Leila M.", role: "professor" }]
+  };
+}
 let pushQ = Promise.resolve();
 const canShare = () => !!(LIVE.db && LIVE.uid && LIVE.write !== false);
 
@@ -2527,7 +2565,7 @@ function staffLogin() {
       <div class="fld"><label for="st-pass">Password</label><input class="field" id="st-pass" type="password" autocomplete="${up ? "new-password" : "current-password"}">${up ? `<span class="fine">At least 6 characters</span>` : ""}</div>
       <p class="small" id="st-err" role="alert" style="color:var(--crit-ink)" hidden></p>
       <div class="row"><button class="btn primary" id="st-btn" type="submit">${up ? "Create account" : "Sign in"}</button><button class="btn" data-act="goHome" type="button">Back to home</button></div>
-    </form></div></section>`;
+    </form>${demoCta()}</div></section>`;
 }
 function codeRow(key, name, c, domain) {
   return `<div class="req"><b>${esc(name)}${domain ? ` <span class="small soft">@${esc(domain)}</span>` : ""}</b>
@@ -2607,15 +2645,15 @@ function whoLine(x, none) {
 }
 
 function allDirStudents() {
-  return DIR.students.filter(s => s && (s.name || (s.checkins && s.checkins.length) || (s.requests && s.requests.length))).map(s => Object.assign({ checkins: [], checkups: [], requests: [] }, s));
+  return (DEMO ? DEMO.students : DIR.students).filter(s => s && (s.name || (s.checkins && s.checkins.length) || (s.requests && s.requests.length))).map(s => Object.assign({ checkins: [], checkups: [], requests: [] }, s));
 }
 /* staff tied to one school already receive only that school, so the school filter is for administrators */
-const oneSchool = () => !!(LIVE.fb && LIVE.schoolKey && !LIVE.admin);
+const oneSchool = () => !!DEMO || !!(LIVE.fb && LIVE.schoolKey && !LIVE.admin);
 function dirStudents() {
   const all = allDirStudents();
   return S.sch && !oneSchool() ? all.filter(s => sameSchool(s.school, S.sch)) : all;
 }
-function replyFor(st, r) { const m = DIR.replies[st.id]; return m ? m["r_" + r.id] || null : null; }
+function replyFor(st, r) { const m = (DEMO ? DEMO.replies : DIR.replies)[st.id]; return m ? m["r_" + r.id] || null : null; }
 function dirRequests() {
   const out = [];
   dirStudents().forEach(st => (st.requests || []).forEach(r => out.push({ st, r, rp: replyFor(st, r) })));
@@ -2798,8 +2836,13 @@ const PLABEL = { classes: "My classes", students: "Students" };
 const PSAFE = ["bullying", "wantsTalk", "decline", "lowMood", "lonely", "sleep", "stress", "workload"];
 const isProf = () => S.mode === "professor";
 const DLABEL = { overview: "Overview", students: "Students", requests: "Requests", setup: "Setup" };
+function demoCta() {
+  return `<div class="note"><h3>Just looking?</h3><p>${isProf() ? "See what professors see, with fictional students. Nothing here is real and nothing is saved." : "See what directors see, with fictional students. Nothing here is real and nothing is saved."}</p>
+    <div><button class="btn" data-act="demoStart" type="button">See an example</button></div></div>`;
+}
 function dirGate() {
   const who = isProf() ? "professors and school staff" : "school staff";
+  if (DEMO) return "";
   if (!LIVE.ready) return `<section class="sec" style="padding-top:34px"><div class="empty">${ic("timer", 40)}<b>Checking your access</b><span>One moment.</span></div></section>`;
   if (LIVE.fb && LIVE.edit !== true) return staffLogin();
   if (LIVE.fb && !isProf() && LIVE.role !== "director") {
@@ -2810,17 +2853,21 @@ function dirGate() {
   if (LIVE.user && LIVE.edit !== true) {
     return `<section class="sec" style="padding-top:34px"><div class="panel" style="max-width:640px"><span class="badge">${ic("lockc", 20)} Staff only</span><h2>This area is for ${who}</h2>
       <p class="soft">It shows well-being information from students who chose to share it, so it is limited to staff who were given Editor access to this page. If you should have access, ask the page owner to share it with you as an Editor.</p>
-      <div class="row"><button class="btn primary" data-act="goStudent" type="button">Go to the student area</button><button class="btn" data-act="goHome" type="button">Back to home</button></div></div></section>`;
+      <div class="row"><button class="btn primary" data-act="goStudent" type="button">Go to the student area</button><button class="btn" data-act="goHome" type="button">Back to home</button></div>${demoCta()}</div></section>`;
   }
   return "";
 }
 function schoolBar() {
   return `<div class="fld" style="max-width:420px"><label for="ss-sel">Your school</label>${schoolPicker("ss-sel", "ss-txt", S.sch, "All schools")}<span class="fine">Choose your school or write it down to see only its students.</span></div>`;
 }
+function demoBar() {
+  return `<div class="note"><div class="row" style="justify-content:space-between;gap:12px"><p><b>Example with fictional students.</b> Nothing here is real, and nothing you do is saved or sent.</p>
+    <div class="row">${isProf() ? `<button class="btn sm" data-act="goDirector" type="button">See the director space</button>` : `<button class="btn sm" data-act="goProfessor" type="button">See the professor space</button>`}<button class="btn sm primary" data-act="demoEnd" type="button">Exit the example</button></div></div></div>`;
+}
 function dirHead(title, sub) {
-  return `<div class="stack" style="gap:10px;padding-top:34px"><h2>${esc(title)}</h2><p class="sec-sub">${esc(sub)}</p>
-    ${oneSchool() ? `<p class="small"><b>School: ${esc(LIVE.school)}</b></p>` : schoolBar()}
-    ${!LIVE.user && !canShare() ? `<p class="fine">Preview mode: no student data is shown. Open StuWell through your school's link to see real students.</p>` : ""}</div>`;
+  return `<div class="stack" style="gap:10px;padding-top:34px">${DEMO ? demoBar() : ""}<h2>${esc(title)}</h2><p class="sec-sub">${esc(sub)}</p>
+    ${oneSchool() ? `<p class="small"><b>School: ${esc(DEMO ? DEMO.school : LIVE.school)}</b></p>` : schoolBar()}
+    ${!DEMO && !LIVE.user && !canShare() ? `<p class="fine">Preview mode: no student data is shown. Open StuWell through your school's link to see real students.</p>` : ""}</div>`;
 }
 function emptyDir() {
   if (S.sch && !oneSchool() && allDirStudents().length) return `<div class="empty">${ic("users", 40)}<b>No students from this school have shared yet</b><span>Students appear here when they choose this school in their profile and turn on sharing. You can look at all schools instead.</span><button class="btn sm" data-act="allSchools" type="button">Show all schools</button></div>`;
@@ -2930,7 +2977,20 @@ function requestsView() {
     <div class="stack" style="gap:12px"><h3>Waiting for a reply (${pend.length})</h3>${pend.length ? pend.map(reqCard).join("") : `<p class="soft">Nothing waiting.</p>`}</div>
     ${done.length ? `<div class="stack" style="gap:12px"><h3>Answered (${done.length})</h3>${done.map(reqCard).join("")}</div>` : ""}</div></section>`;
 }
+function demoSetupView() {
+  const d = DEMO;
+  return dirHead("Setup", "How this dashboard gets its data, who can see it, and how to give people access.") + `<section class="sec" style="padding-top:20px"><div class="stack" style="gap:18px">
+    <div class="panel"><h3>Access codes for your school</h3>
+      <p class="fine">Give each code only to the right staff. Anyone with a code can create a staff account straight away. If a code leaks, change it here; existing accounts stay until you remove them.</p>
+      <div class="req"><b>${esc(d.school)}</b><div class="fields"><div class="fld"><span class="label">Director code</span><span class="mono">${esc(d.codes.directorCode)}</span></div><div class="fld"><span class="label">Professor code</span><span class="mono">${esc(d.codes.professorCode)}</span></div></div></div>
+      <h3>Staff accounts</h3>
+      <div>${d.staff.map(s => `<div class="mini-row"><span><b>${esc(s.name)}</b> <span class="small soft">${s.role === "director" ? "Director" : "Professor"} · ${esc(d.school)}</span></span>${s.you ? `<span class="small soft">You</span>` : ""}</div>`).join("")}</div></div>
+    <div class="panel"><h3>What students share</h3>
+      <ul class="small stack" style="gap:8px;padding-left:18px;margin:0"><li>Only after they turn it on: name, school, year, class, check-in scores and flags, screener scores.</li><li>Only when they press send: a medical request and their name.</li><li>Never free text from check-ins or screener answers.</li></ul></div>
+  </div></section>`;
+}
 function setupView() {
+  if (DEMO) return demoSetupView();
   const live = !!LIVE.db, n = DIR.students.length;
   return dirHead("Setup", "How this dashboard gets its data, who can see it, and how to give people access.") + `<section class="sec" style="padding-top:20px"><div class="stack" style="gap:18px">
     ${LIVE.fb && (LIVE.admin || (LIVE.role === "director" && LIVE.schoolKey)) ? staffAdminHTML() : ""}
@@ -3109,6 +3169,7 @@ function hashFor() { return S.mode === "home" ? "" : S.mode + "/" + (S.mode === 
 function setHash() { const h = hashFor(); lastHash = h; try { if (location.hash.slice(1) !== h) location.hash = h; } catch (e) { /* ignore */ } }
 function nav(mode, tab) {
   if (mode !== S.mode) { S.flow = null; S.step = 0; }
+  if (mode !== "director" && mode !== "professor") DEMO = null;
   S.mode = mode; S.menu = false; S.confirmWipe = false;
   if (mode === "student" && tab && TABS.includes(tab)) S.tab = tab;
   if (mode === "director" && tab && DTABS.includes(tab)) S.dtab = tab;
@@ -3194,6 +3255,7 @@ document.addEventListener("click", e => {
       const sid = el.dataset.sid, rid = el.dataset.rid, ta = document.getElementById("rp-" + sid + "-" + rid), txt = ta ? ta.value.trim() : "";
       if (v === "info" && !txt) { toast("Write what you need to know first"); if (ta) ta.focus(); break; }
       const key = "r_" + rid, rec = { status: v, reply: txt.slice(0, 600), ts: Date.now() };
+      if (DEMO) { DEMO.replies[sid] = Object.assign({}, DEMO.replies[sid] || {}, { [key]: rec }); render(); toast("Example only: nothing was sent"); break; }
       if (!LIVE.db) { toast("Not connected to the school page"); break; }
       const stu = DIR.students.find(x => x.id === sid) || {};
       const next = Object.assign({}, DIR.replies[sid] || {}, { [key]: rec }, LIVE.fb ? { schoolKey: String(stu.schoolKey || "") } : {});
@@ -3203,6 +3265,8 @@ document.addEventListener("click", e => {
     case "justBreathe": S.tool = "breathe"; go("calm"); break;
     case "exitFlow": exitFlow(); break;
     case "staffOut": S.menu = false; staffSignOut(); break;
+    case "demoStart": DEMO = demoData(); S.open = null; S.fq = ""; S.fcls = ""; S.fyr = ""; S.flev = ""; if (isProf()) S.ptab = "classes"; else S.dtab = "overview"; setHash(); render(); top0(); break;
+    case "demoEnd": DEMO = null; S.open = null; render(); top0(); break;
     case "staffTab": S.staffTab = v; render(); break;
     case "fbKind": S.fb.kind = v; document.querySelectorAll('[data-act="fbKind"]').forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v))); break;
     case "fbStar": S.fb.rating = S.fb.rating === +v ? 0 : +v; document.querySelectorAll('[data-act="fbStar"]').forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v <= S.fb.rating))); break;

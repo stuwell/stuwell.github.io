@@ -22,6 +22,8 @@ desktop.ini
 
 # Project documents and extra copies (not part of the site)
 *.docx
+*.pptx
+*.pdf
 StuWell.html
 stuwell-qr.png
 
